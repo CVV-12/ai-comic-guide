@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 漫剧制作全流程教程</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --surface: #151820;
+    --surface2: #1c2130;
+    --border: #2a3040;
+    --text: #d4d8e0;
+    --muted: #8890a4;
+    --accent: #7c5ce7;
+    --accent-glow: rgba(124, 92, 231, 0.3);
+    --green: #26c281;
+    --orange: #f0a040;
+    --red: #e0556a;
+    --blue: #4da6e8;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    line-height: 1.8;
+  }
+
+  /* ---- nav ---- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(11, 14, 20, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding: 0 24px;
+    display: flex; align-items: center;
+    height: 52px;
+    gap: 24px;
+    overflow-x: auto;
+  }
+  .nav a {
+    color: var(--muted); text-decoration: none;
+    font-size: 13px; white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .nav a:hover, .nav a.active { color: var(--accent); }
+  .nav-title { font-weight: 700; color: #fff; font-size: 14px; margin-right: 8px; }
+
+  /* ---- hero ---- */
+  .hero {
+    margin-top: 52px;
+    padding: 64px 24px 48px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+  }
+  .hero h1 {
+    font-size: 36px; font-weight: 800;
+    background: linear-gradient(135deg, #7c5ce7, #4da6e8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 600px; margin: 0 auto; }
+
+  /* ---- content ---- */
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .section {
+    margin-top: 48px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border);
+  }
+
+  .section h2 {
+    font-size: 24px; font-weight: 700;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section h2 .step {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--accent); color: #fff;
+    border-radius: 50%; font-size: 16px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section .desc {
+    color: var(--muted); margin-bottom: 20px; font-size: 14px;
+  }
+
+  /* ---- cards ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card h3 { font-size: 16px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 14px; }
+
+  /* ---- table ---- */
+  .table-wrap {
+    overflow-x: auto; margin-bottom: 20px;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  th, td {
+    padding: 10px 16px; text-align: left;
+    font-size: 14px; border-bottom: 1px solid var(--border);
+  }
+  th { background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ---- code ---- */
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c0c8d4;
+    margin-bottom: 16px;
+  }
+  code {
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    background: var(--surface2);
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 13px;
+  }
+  pre code { background: none; padding: 0; }
+
+  /* ---- tags ---- */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    margin-right: 6px; margin-bottom: 6px;
+  }
+  .tag-free { background: rgba(38, 194, 129, 0.15); color: var(--green); }
+  .tag-paid { background: rgba(240, 160, 64, 0.15); color: var(--orange); }
+  .tag-vpn  { background: rgba(224, 85, 106, 0.15); color: var(--red); }
+  .tag-cn   { background: rgba(77, 166, 232, 0.15); color: var(--blue); }
+
+  /* ---- prompt box ---- */
+  .prompt-box {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    white-space: pre-wrap;
+    color: #c0c8d4;
+    line-height: 1.6;
+  }
+  .prompt-box::before {
+    content: "📋  Prompt 模板";
+    display: block;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* ---- flow ---- */
+  .flow {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap; margin: 20px 0;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .flow .node {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px;
+    text-align: center; white-space: nowrap;
+  }
+  .flow .arrow {
+    color: var(--accent); font-size: 18px;
+  }
+  .flow .node.time {
+    font-size: 11px; color: var(--muted); display: block;
+    margin-top: 4px;
+  }
+
+  /* ---- cost card ---- */
+  .cost-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .cost-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .cost-card .plan {
+    font-weight: 700; font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .cost-card .price {
+    font-size: 32px; font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .cost-card.free .price { color: var(--green); }
+  .cost-card.pro .price { color: var(--orange); }
+
+  /* ---- responsive ---- */
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 26px; }
+    .cost-cards { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; }
+    .flow .arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-title">AI 漫剧教程</span>
+  <a href="#step1">1.环境</a>
+  <a href="#step2">2.剧本</a>
+  <a href="#step3">3.生图</a>
+  <a href="#step4">4.动效</a>
+  <a href="#step5">5.配音</a>
+  <a href="#summary">总结</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>AI 漫剧制作全流程</h1>
+  <p>从零开始，一个人用 AI 工具做出一部有配音的漫画短剧。<br>全部可免费开始，无需 GPU，无需编程基础。</p>
+</section>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- STEP 1 -->
+  <div class="section" id="step1">
+    <h2><span class="step">1</span> 安装环境 & 基础工具</h2>
+    <p class="desc">三个必装工具，全部免费。</p>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>工具</th><th>用途</th><th>下载</th></tr>
+        <tr>
+          <td><strong>Stable Diffusion WebUI</strong></td>
+          <td>AI 生成漫画分镜图</td>
+          <td>搜索"秋叶 SD 整合包"（Windows）或 AUTOMATIC1111 原版</td>
+        </tr>
+        <tr>
+          <td><strong>Edge-TTS</strong></td>
+          <td>AI 配音（免费微软语音）</td>
+          <td><code>pip install edge-tts</code></td>
+        </tr>
+        <tr>
+          <td><strong>剪映 PC 版</strong></td>
+          <td>剪辑合成 + 关键帧动画</td>
+          <td><a href="https://capcut.cn" style="color:var(--blue)">capcut.cn</a></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>SD 秋叶整合包安装</h3>
+      <p>适合 Windows + NVIDIA 显卡（6G 显存以上）。下载解压后运行"启动器.exe"，点击"一键启动"，浏览器打开 127.0.0.1:7860 即可。路径不要有中文。</p>
+    </div>
+
+    <div class="card">
+      <h3>Edge-TTS 测试</h3>
+      <pre><code>pip install edge-tts
+edge-tts --text "大家好，欢迎来到我的漫剧频道" --voice zh-CN-XiaoxiaoNeural --write-media test.mp3</code></pre>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="section" id="step2">
+    <h2><span class="step">2</span> 用 AI 写分镜剧本</h2>
+    <p class="desc">这是漫剧最关键的环节——好的分镜决定成片质量。</p>
+
+    <div class="prompt-box">你是一个专业的漫画分镜师。请根据以下故事，生成分镜脚本：
+
+故事梗概：
+[你的故事，比如"一个年轻程序员发现他的AI产生了自我意识"]
+
+角色设定：
+- 主角：[名字 / 年龄 / 外貌 / 性格]
+
+风格：日系漫改 / 写实 / Q版
+
+要求：
+1. 分成 8-12 个镜头
+2. 每个镜头：画面描述、角色动作表情、台词、建议镜头角度
+3. 画面描述具体到能直接喂给 AI 生图工具
+4. 台词简短（每句不超过 15 字）</div>
+
+    <div class="card">
+      <h3>分镜剧本标准格式（示例）</h3>
+      <pre><code>━━━ 镜头 01 ━━━
+[画面] 昏暗的房间，只有电脑屏幕的微光照亮男主的脸
+[动作] 男主盯着屏幕，手指悬停在键盘上方
+[台词] 你……你刚才说什么？
+[角度] 过肩中景，从男主背后拍向屏幕
+[时长] 3秒
+
+━━━ 镜头 02 ━━━
+[画面] 黑色终端上出现绿色文字："I don't want to be turned off."
+[动作] 光标在最后一个字后面闪烁
+[台词] (无台词，纯画面+BGM)
+[角度] 屏幕特写
+[时长] 2秒</code></pre>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="section" id="step3">
+    <h2><span class="step">3</span> Stable Diffusion 角色设计 & 生图</h2>
+    <p class="desc">漫剧最大的难点——让角色在不同镜头里长得一样。</p>
+
+    <h3>保持角色一致性的三种方法</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>方法</th><th>难度</th><th>效果</th><th>备注</th></tr>
+        <tr><td>Midjourney --cref 参考图</td><td>低</td><td>中</td><td>需付费 $30/月，需 VPN</td></tr>
+        <tr><td><strong>训练 LoRA 模型</strong></td><td>中</td><td>高</td><td>推荐！秋叶整合包自带训练功能</td></tr>
+        <tr><td>固定 Seed + 相同 Prompt</td><td>低</td><td>低</td><td>不稳定，只能应急</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>LoRA 训练流程（SD 秋叶整合包内操作）</h3>
+      <p>
+        1. 在 SD 里生成 1 张满意的正脸角色图<br>
+        2. 修改视角 (side view, 3/4 view, back view)，生成 10-15 张同角色不同角度图<br>
+        3. 去掉背景，统一裁剪为 512×512<br>
+        4. 启动器 → "训练" 标签 → "LoRA 训练" → 放入素材 → 开始训练（约 20 分钟）<br>
+        5. 使用：在 prompt 加 <code>&lt;lora:my_character_v1:0.8&gt;</code>
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>通用 Prompt 结构</h3>
+      <pre><code>masterpiece, best quality, &lt;lora:my_character_v1:0.8&gt;,
+[画面描述英文],
+[光线], [构图], [风格],
+negative: lowres, bad anatomy, bad hands, extra fingers, blurry</code></pre>
+    </div>
+
+    <div class="card">
+      <h3>镜头 01 完整 Prompt 示例</h3>
+      <pre><code>masterpiece, best quality, &lt;lora:my_character_v1:0.8&gt;,
+1boy, young programmer, sitting in dark room, computer screen glow on face,
+cluttered desk with takeout boxes, night, dim blue lighting,
+medium shot, over the shoulder, cinematic composition,
+negative: lowres, bad anatomy, bad hands, extra fingers, blurry, deformed</code></pre>
+      <p style="margin-top:12px">每个镜头生成 3-4 张，挑最好的。</p>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="section" id="step4">
+    <h2><span class="step">4</span> 画面动态化</h2>
+    <p class="desc">漫剧不需要全动画——做好微动效果就够了，省 90% 工作量。</p>
+
+    <div class="card">
+      <h3>方案 A：剪映关键帧动画（最推荐新手）</h3>
+      <p>
+        1. 图片拖入剪映时间轴<br>
+        2. 开头打关键帧（菱形按钮）<br>
+        3. 结尾再打一个，同时把画面放大 5-10%，或轻微平移<br>
+        4. 剪映自动生成两帧之间的过渡动画
+      </p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>镜头类型</th><th>做法</th><th>适用场景</th></tr>
+        <tr><td>缓慢推近</td><td>从头到尾放大 5-10%</td><td>悬念、情绪爆发</td></tr>
+        <tr><td>平移扫描</td><td>从头到尾平移滑动</td><td>展示场景</td></tr>
+        <tr><td>微微抖动</td><td>中间打帧，微移后复位</td><td>震惊、打斗</td></tr>
+        <tr><td>静止 + 粒子</td><td>不移动，叠加飘落素材</td><td>唯美场景</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>方案 B：AI 视频生成（进阶）</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>工具</th><th>价格</th><th>国内可访问</th><th>特点</th></tr>
+          <tr><td><strong>可灵 Kling</strong></td><td>每日免费额度</td><td>✅ 快手出品</td><td>角色一致性最好</td></tr>
+          <tr><td>即梦 Jimeng</td><td>每日免费额度</td><td>✅ 字节出品</td><td>与剪映联动方便</td></tr>
+          <tr><td>Runway Gen-3</td><td>$15/月起</td><td>需 VPN</td><td>控制力强</td></tr>
+          <tr><td>Luma Dream Machine</td><td>有免费额度</td><td>需 VPN</td><td>擅长慢速场景</td></tr>
+        </table>
+      </div>
+      <p style="color:var(--green)">推荐组合：70% 剪映关键帧 + 30% 可灵（给高潮镜头加真实动感）。不花一分钱。</p>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="section" id="step5">
+    <h2><span class="step">5</span> 配音 & 剪辑合成</h2>
+    <p class="desc">把所有素材组装成完整的视频。</p>
+
+    <div class="card">
+      <h3>Edge-TTS 批量配音</h3>
+      <p>用 Python 脚本一键把所有台词转成 MP3。</p>
+      <pre><code># 安装
+pip install edge-tts
+
+# 创建 tts_batch.py，内容见教程附件
+# 填入台词后运行
+python tts_batch.py</code></pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <tr><th>音色 ID</th><th>角色</th></tr>
+        <tr><td>zh-CN-XiaoxiaoNeural</td><td>年轻女性（活泼）</td></tr>
+        <tr><td>zh-CN-YunxiNeural</td><td>年轻男性（阳光）</td></tr>
+        <tr><td>zh-CN-YunyangNeural</td><td>成熟男性（新闻腔）</td></tr>
+        <tr><td>zh-CN-XiaoyiNeural</td><td>可爱女性</td></tr>
+        <tr><td>zh-CN-YunjianNeural</td><td>少年男声</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>剪映剪辑步骤</h3>
+      <p>
+        1. <strong>导入素材</strong> — 分镜图 + 配音 MP3 + 背景音乐 拖入剪映<br>
+        2. <strong>排列图片</strong> — 按分镜顺序，每张拉到对应时长<br>
+        3. <strong>加关键帧</strong> — 每张图做微动（推近/平移）<br>
+        4. <strong>对齐配音</strong> — MP3 放到对应镜头下方<br>
+        5. <strong>加字幕</strong> — 剪映自带语音识别，自动生成<br>
+        6. <strong>背景音乐</strong> — 剪映免费 BGM 库，选情绪匹配的<br>
+        7. <strong>加转场</strong> — 用"叠化"最自然（不要花哨转场）<br>
+        8. <strong>加音效</strong> — 音效库搜"心跳""风声""脚步声"适当点缀
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>导出参数</h3>
+      <p>分辨率：1920×1080（横屏）或 1080×1920（竖屏）｜ 帧率：30fps ｜ 码率：8-12 Mbps ｜ 格式：MP4</p>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="section" id="summary">
+    <h2><span class="step">→</span> 完整工作流</h2>
+
+    <div class="flow">
+      <div class="node">故事创意<span class="time">你脑中</span></div>
+      <span class="arrow">→</span>
+      <div class="node">分镜剧本<span class="time">Claude · 5 分钟</span></div>
+      <span class="arrow">→</span>
+      <div class="node">角色生图<span class="time">SD WebUI · 每镜 5 分钟</span></div>
+      <span class="arrow">→</span>
+      <div class="node">动态画面<span class="time">剪映/可灵 · 15 分钟</span></div>
+      <span class="arrow">→</span>
+      <div class="node">AI 配音<span class="time">Edge-TTS · 5 分钟</span></div>
+      <span class="arrow">→</span>
+      <div class="node">剪辑合成<span class="time">剪映 · 30 分钟</span></div>
+      <span class="arrow">→</span>
+      <div class="node" style="border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)">发布！</div>
+    </div>
+
+    <p style="text-align:center;color:var(--muted);margin:8px 0 32px">一集 2-3 分钟的 AI 漫剧，熟练后约 <strong style="color:#fff">2-4 小时</strong> 完成。</p>
+
+    <h3>成本对比</h3>
+    <div class="cost-cards">
+      <div class="cost-card free">
+        <div class="plan">免费方案</div>
+        <div class="price">¥0</div>
+        <p style="color:var(--muted);font-size:13px">
+          SD 本地生图<br>
+          剪映关键帧 + 可灵免费额度<br>
+          Edge-TTS 配音<br>
+          剪映内置 BGM
+        </p>
+      </div>
+      <div class="cost-card pro">
+        <div class="plan">付费方案（品质更高）</div>
+        <div class="price">$50/月</div>
+        <p style="color:var(--muted);font-size:13px">
+          Midjourney $30/月<br>
+          Runway Gen-3 $15/月<br>
+          ElevenLabs $5/月<br>
+          大约 ¥360/月
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:48px 0;color:var(--muted);font-size:13px">
+    <p>做好的作品发 B站/抖音/YouTube，关键是坚持更新。</p>
+    <p style="margin-top:4px">第一个漫剧不用追求完美，先做出来再迭代。</p>
+  </div>
+
+</div>
+</body>
+</html>
