@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draw Things 使用教程 — AI 漫剧生图</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1a1a25;
+    --border: #2a2a3a;
+    --text: #d4d4dc;
+    --muted: #8888a0;
+    --accent: #e8795a;
+    --accent2: #5a9ee8;
+    --green: #3eb882;
+    --gold: #d4af37;
+    --warn: #e8a040;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    line-height:1.8;
+  }
+
+  /* nav */
+  .nav {
+    position:fixed; top:0; left:0; right:0; height:50px;
+    background:rgba(10,10,15,0.94); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:20px;
+    padding:0 20px; z-index:100; overflow-x:auto;
+  }
+  .nav a { color:var(--muted); text-decoration:none; font-size:13px; white-space:nowrap; }
+  .nav a:hover { color:var(--accent); }
+  .nav .logo { font-weight:800; color:#fff; font-size:14px; margin-right:8px; }
+
+  /* hero */
+  .hero {
+    margin-top:50px; text-align:center; padding:56px 20px 40px;
+    background:linear-gradient(180deg, #1a1210 0%, #0a0a0f 100%);
+  }
+  .hero h1 { font-size:34px; font-weight:900; }
+  .hero h1 span { color:var(--accent); }
+  .hero p { color:var(--muted); margin-top:8px; font-size:15px; }
+
+  /* content */
+  .content { max-width:820px; margin:0 auto; padding:0 20px 80px; }
+
+  .section {
+    margin-top:44px; padding-top:44px;
+    border-top:1px solid var(--border);
+  }
+  .section h2 {
+    font-size:22px; margin-bottom:6px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section h2 .n {
+    width:34px; height:34px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:800; flex-shrink:0;
+  }
+  .section .d { color:var(--muted); font-size:14px; margin-bottom:18px; }
+
+  /* cards */
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:18px 22px; margin-bottom:14px;
+  }
+  .card h3 { font-size:15px; margin-bottom:6px; }
+  .card h3 .emoji { margin-right:6px; }
+  .card p, .card li { color:var(--muted); font-size:13.5px; }
+  .card ul { padding-left:18px; }
+  .card li { margin:4px 0; }
+
+  /* step cards */
+  .step-row {
+    display:flex; gap:14px; margin-bottom:14px;
+    align-items:flex-start;
+  }
+  .step-num {
+    width:30px; height:30px; border-radius:50%;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:14px; flex-shrink:0; margin-top:16px;
+  }
+  .step-body {
+    flex:1; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 20px;
+  }
+  .step-body h3 { font-size:14px; margin-bottom:4px; }
+  .step-body p { color:var(--muted); font-size:13px; }
+
+  /* table */
+  .tbl { overflow-x:auto; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  th, td { padding:9px 14px; text-align:left; font-size:13px; border-bottom:1px solid var(--border); }
+  th { background:var(--surface2); color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:1px; }
+  tr:last-child td { border-bottom:none; }
+
+  /* code / prompt */
+  pre {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; padding:14px 18px; overflow-x:auto;
+    font-size:12.5px; line-height:1.6; color:#b0b8c4;
+    margin:10px 0; white-space:pre-wrap;
+  }
+  code {
+    font-family:"SF Mono","Fira Code",monospace;
+    background:var(--surface2); padding:2px 6px;
+    border-radius:4px; font-size:12.5px;
+  }
+  pre code { background:none; padding:0; }
+
+  /* labels */
+  .tag {
+    display:inline-block; padding:2px 10px; border-radius:20px;
+    font-size:11px; font-weight:600; margin-right:6px;
+  }
+  .tag-red { background:rgba(232,121,90,0.15); color:var(--accent); }
+  .tag-blue { background:rgba(90,158,232,0.15); color:var(--accent2); }
+  .tag-green { background:rgba(62,184,130,0.15); color:var(--green); }
+  .tag-gold { background:rgba(212,175,55,0.15); color:var(--gold); }
+
+  /* comparison */
+  .compare {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:14px; margin-bottom:14px;
+  }
+  .compare .card { margin-bottom:0; }
+  .compare .card.wrong { border-color:rgba(232,121,90,0.3); }
+  .compare .card.right { border-color:rgba(62,184,130,0.3); }
+
+  /* flow */
+  .flow {
+    display:flex; align-items:center; gap:6px;
+    flex-wrap:wrap; margin:16px 0; font-size:12px;
+  }
+  .flow .node {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; padding:8px 14px; white-space:nowrap;
+    text-align:center;
+  }
+  .flow .node .sub { font-size:10px; color:var(--muted); display:block; }
+  .flow .arr { color:var(--accent); font-size:16px; font-weight:700; }
+
+  /* highlight box */
+  .hl {
+    background:var(--surface2); border-left:3px solid var(--accent);
+    border-radius:0 var(--radius) var(--radius) 0;
+    padding:14px 18px; margin:14px 0; font-size:13px;
+    color:var(--muted);
+  }
+  .hl strong { color:var(--text); }
+
+  /* tip */
+  .tip {
+    background:rgba(90,158,232,0.08);
+    border:1px solid rgba(90,158,232,0.2);
+    border-radius:8px; padding:12px 18px;
+    margin:14px 0; font-size:13px; color:var(--accent2);
+  }
+  .tip::before { content:"💡 提示 "; font-weight:700; }
+
+  /* responsive */
+  @media(max-width:640px) {
+    .compare { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="logo">Draw Things 教程</span>
+  <a href="#s1">1.下载模型</a>
+  <a href="#s2">2.第一张图</a>
+  <a href="#s3">3.LoRA训练</a>
+  <a href="#s4">4.使用LoRA</a>
+  <a href="#s5">5.逐镜提示</a>
+  <a href="#s6">6.常见问题</a>
+</nav>
+
+<div class="hero">
+  <h1><span>Draw Things</span> 完全使用指南</h1>
+  <p>在 Mac 上本地运行 Stable Diffusion，免费、离线、无限出图</p>
+</div>
+
+<div class="content">
+
+<!-- ====== S1 ====== -->
+<div class="section" id="s1">
+  <h2><span class="n">1</span> 下载模型</h2>
+  <p class="d">Draw Things 首次使用需要下载一个生图模型。</p>
+
+  <div class="card">
+    <h3><span class="emoji"></span>推荐模型</h3>
+  </div>
+
+  <div class="tbl">
+    <table>
+      <tr><th>模型名</th><th>风格</th><th>适合</th><th>大小</th></tr>
+      <tr>
+        <td><strong>GuoFeng3</strong> <span class="tag tag-gold">推荐</span></td>
+        <td>中国古风 / 仙侠</td>
+        <td>洪荒题材完美适配</td>
+        <td>~7GB</td>
+      </tr>
+      <tr>
+        <td><strong>DreamShaper</strong></td>
+        <td>写实 + 幻想</td>
+        <td>通用场景、人物</td>
+        <td>~7GB</td>
+      </tr>
+      <tr>
+        <td><strong>Realistic Vision</strong></td>
+        <td>照片级写实</td>
+        <td>现代场景、真人质感</td>
+        <td>~7GB</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>打开模型下载界面</h3>
+      <p>Draw Things → 顶部中间模型名称 → 点 "<strong>Download Models</strong>"</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>搜索并下载</h3>
+      <p>搜索框输入 <code>GuoFeng</code> → 找到 GuoFeng3 → 点右侧下载图标。等待下载完成（约 5-10 分钟，取决于网速）</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>切换到已下载的模型</h3>
+      <p>下载完成后点模型名称 → 在列表里选 <strong>GuoFeng3</strong> → 模型加载完成，可以开始了</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S2 ====== -->
+<div class="section" id="s2">
+  <h2><span class="n">2</span> 生成第一张图</h2>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>设置画幅比例</h3>
+      <p>点底部画幅图标 → 选 <strong>16:9</strong>（横屏漫剧）或 <strong>9:16</strong>（抖音竖屏）</p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>粘贴 Prompt</h3>
+      <p>把分镜脚本里的英文 Prompt 粘贴到 <strong>Positive Prompt</strong> 输入框</p>
+      <pre><code>masterpiece, best quality, endless primordial chaos void,
+grey-purple mist surging, no sky no earth, no light,
+cosmic scale, distant overhead shot, epic, dark atmosphere</code></pre>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>粘贴负面 Prompt</h3>
+      <p>把以下通用负面词粘贴到 <strong>Negative Prompt</strong> 框：</p>
+      <pre><code>lowres, bad anatomy, bad hands, extra fingers, blurry,
+deformed, ugly, watermark, text, jpeg artifacts,
+worst quality, low quality, normal quality</code></pre>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>点击 Generate</h3>
+      <p>底部绿色大按钮。等待 30 秒 ~ 2 分钟（Apple Silicon 芯片越快生成越快）</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>参数说明（新手保持默认即可）</h3>
+    <div class="tbl">
+      <table>
+        <tr><th>参数</th><th>默认值</th><th>作用</th></tr>
+        <tr><td>Steps</td><td>25</td><td>迭代步数，越高越精细但也越慢。20-30 够用</td></tr>
+        <tr><td>CFG Scale</td><td>7</td><td>Prompt 遵循度，越高越听 Prompt 的话。5-10 之间</td></tr>
+        <tr><td>Seed</td><td>-1 (随机)</td><td>随机种子，点骰子换随机值，同一 Prompt 出不同图</td></tr>
+        <tr><td>Image Size</td><td>512×512</td><td>改成 1024×576（16:9）或 576×1024（9:16）</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S3 ====== -->
+<div class="section" id="s3">
+  <h2><span class="n">3</span> 训练白尘 LoRA（锁脸）</h2>
+  <p class="d">漫剧最核心的一步——让白尘在 13 个镜头里长得一样。</p>
+
+  <div class="flow">
+    <div class="node">生成定妆照<span class="sub">用镜头11 Prompt</span></div>
+    <span class="arr">&rarr;</span>
+    <div class="node">生成多角度图<span class="sub">改Seed，跑10-15张</span></div>
+    <span class="arr">&rarr;</span>
+    <div class="node">全部拖入LoRA训练<span class="sub">Trigger: baichen</span></div>
+    <span class="arr">&rarr;</span>
+    <div class="node">训练完成<span class="sub">约5-15分钟</span></div>
+    <span class="arr">&rarr;</span>
+    <div class="node" style="border-color:var(--green);">生图加 &lt;lora:baichen:0.8&gt;</div>
+  </div>
+
+  <h3 style="margin-top:20px;margin-bottom:12px;">详细步骤</h3>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>生成白尘定妆照</h3>
+      <p>用镜头 11 的 Prompt，生成一张满意的白尘正面半身像。不满意就多点几次骰子换 Seed 重跑。</p>
+      <pre><code>masterpiece, best quality, 1boy standing in void,
+long black hair to waist, handsome refined face,
+faint pearl mark on forehead, bare chested showing lean muscles,
+ancient Chinese immortal aesthetic, ethereal lighting,
+front view, looking at camera</code></pre>
+      <p>生成后，长按图片 → <strong>"Save to Album"</strong>（存到 Draw Things 内置图库）</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>生成多角度参考图</h3>
+      <p>在上面 prompt 基础上，修改视角词，每种视角跑 2-3 张，挑好的存到 Album：</p>
+      <div class="tbl">
+        <table>
+          <tr><th>添加的视角词</th><th>效果</th></tr>
+          <tr><td><code>side view, profile</code></td><td>侧面</td></tr>
+          <tr><td><code>3/4 view, looking left</code></td><td>四分之三侧面</td></tr>
+          <tr><td><code>looking up, low angle</code></td><td>仰视</td></tr>
+          <tr><td><code>half body shot</code></td><td>半身像</td></tr>
+          <tr><td><code>close-up face, front view</code></td><td>脸部特写</td></tr>
+        </table>
+      </div>
+      <p>总共凑 <strong>10-15 张</strong> 同角色不同角度的高清图</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>开始 LoRA 训练</h3>
+      <p>
+        Draw Things 顶部 → <strong>"LoRA" 标签</strong> → 点 <strong>"Create LoRA"</strong><br>
+        把所有白尘图从 Album 拖进训练界面<br>
+        <strong>Trigger word</strong> 填：<code>baichen</code><br>
+        其他参数保持默认 → 点底部 <strong>"Train"</strong><br>
+        训练时长：M1 ≈ 15分钟，M2/M3 ≈ 8分钟，M4 ≈ 5分钟
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S4 ====== -->
+<div class="section" id="s4">
+  <h2><span class="n">4</span> 使用 LoRA 生成角色图</h2>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>开启 LoRA</h3>
+      <p>在画图界面点 <strong>"LoRA"</strong> 开关 → 找到 <code>baichen</code> → 拖动滑块到 <strong>0.7 - 0.8</strong></p>
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Prompt 加 Trigger Word</h3>
+      <p>在所有需要白尘出场的 Prompt 里，<strong>最前面</strong>加上 <code>baichen</code>：</p>
+      <pre><code>baichen, masterpiece, best quality, 1boy,
+long black hair, young Taoist disciple,
+green robe, kneeling in celestial palace...</code></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>LoRA 强度参考</h3>
+    <div class="tbl">
+      <table>
+        <tr><th>强度</th><th>效果</th><th>适用场景</th></tr>
+        <tr><td>0.5 - 0.6</td><td>轻参考，有一定自由度</td><td>远景、背影、小比例人物</td></tr>
+        <tr><td>0.7 - 0.8</td><td>标准参考，脸型固定</td><td>中景、半身、大部分镜头</td></tr>
+        <tr><td>0.9 - 1.0</td><td>强锁定，几乎复制训练图</td><td>脸部特写镜头</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ====== S5 ====== -->
+<div class="section" id="s5">
+  <h2><span class="n">5</span> 逐镜头生成提示</h2>
+  <p class="d">13 个镜头的生图策略，哪些开 LoRA，哪些直接生成。</p>
+
+  <div class="tbl">
+    <table>
+      <tr><th>镜头</th><th>内容</th><th>LoRA</th><th>强度</th><th>备注</th></tr>
+      <tr>
+        <td>01</td><td>混沌虚空</td>
+        <td><span class="tag tag-red">不需要</span></td><td>-</td><td>纯场景，直接生成</td>
+      </tr>
+      <tr>
+        <td>02</td><td>沉睡盘古</td>
+        <td><span class="tag tag-red">不需要</span></td><td>-</td><td>场景+盘古，无白尘</td>
+      </tr>
+      <tr>
+        <td>03</td><td>白尘意识体</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.7</td><td>第一张白尘出镜，是关键图</td>
+      </tr>
+      <tr>
+        <td>04</td><td>系统面板+白尘</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.7</td><td>过肩镜头，LoRA保证侧脸一致</td>
+      </tr>
+      <tr>
+        <td>05</td><td>混沌珠特写</td>
+        <td><span class="tag tag-red">不需要</span></td><td>-</td><td>物品特写</td>
+      </tr>
+      <tr>
+        <td>06</td><td>白尘伸手夺珠</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.7</td><td>侧面+手部动作</td>
+      </tr>
+      <tr>
+        <td>07</td><td>金光护体</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.6</td><td>金光可能盖住脸，强度略降</td>
+      </tr>
+      <tr>
+        <td>08</td><td>握住混沌珠</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.8</td><td>需要脸部+手部都清晰</td>
+      </tr>
+      <tr>
+        <td>09</td><td>盘古开天</td>
+        <td><span class="tag tag-red">不需要</span></td><td>-</td><td>大场景，白尘只是小光点</td>
+      </tr>
+      <tr>
+        <td>10</td><td>白尘变形融合</td>
+        <td><span class="tag tag-blue">关闭</span></td><td>-</td><td>变形中的脸不适用LoRA</td>
+      </tr>
+      <tr>
+        <td>11</td><td>白尘新身体</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.8</td><td>最重要的定妆镜头！</td>
+      </tr>
+      <tr>
+        <td>12</td><td>拜师通天</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.7</td><td>白尘跪拜，只对白尘加LoRA</td>
+      </tr>
+      <tr>
+        <td>13</td><td>白尘脸部特写</td>
+        <td><span class="tag tag-green">开启</span></td><td>0.9</td><td>收尾大头特写，高LoRA强度</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ====== S6 ====== -->
+<div class="section" id="s6">
+  <h2><span class="n">6</span> 常见问题 & 技巧</h2>
+
+  <div class="card">
+    <h3>图不满意怎么办</h3>
+    <ul>
+      <li><strong>换 Seed</strong>：点 Generate 按钮旁边的骰子图标，同样的 Prompt 能出完全不同但都好看的图</li>
+      <li><strong>增加 Steps</strong>：从 25 改到 35-40，画面更精细（但也更慢）</li>
+      <li><strong>调整 CFG</strong>：如果画面"不听话"，提到 8-9；如果画面"太死板"，降到 5-6</li>
+      <li><strong>Img2Img 修补</strong>：找到一张"还行但不够好"的图，拖进画布，切换到 Img2Img 模式，Strength 设 0.3-0.5，重新生成</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>手画崩了 / 手指多了</h3>
+    <p>这是 SD 的通病。三个解决方案：</p>
+    <ul>
+      <li>负面 prompt 里确保有 <code>bad hands, extra fingers, mutated hands</code></li>
+      <li>多跑几张，选手部正常的（最省事）</li>
+      <li>用 Inpaint 功能：画笔涂掉问题区域，单独重绘那一小块</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>角色老是像另一个人</h3>
+    <ul>
+      <li>确认 LoRA 开关已打开 + 强度 ≥ 0.7</li>
+      <li>确认 Prompt 最前面有 trigger word <code>baichen</code></li>
+      <li>如果还是不像，把 LoRA 强度提到 0.9</li>
+      <li>如果换个角度就不像，说明训练素材角度不够多，回到步骤 3.2 补充更多角度图</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>生成太慢</h3>
+    <ul>
+      <li>降低分辨率：不要一上来就 1920×1080，先用 768×432 出小图，满意后再用 <strong>Upscale</strong> 放大</li>
+      <li>降低 Steps：20 步其实已经够用于筛选，最终图再用 30 步</li>
+      <li>M1/M2 Mac：耐心等待，一张 1024×576 大约 1-3 分钟</li>
+    </ul>
+  </div>
+
+  <div class="tip">
+    <strong>先在线试，再本地产</strong>：建议先用 liblib.ai 在线生成几张开开眼，确认 Prompt 效果好，再用 Draw Things 本地批量生成 + LoRA 锁脸。省时又保险。
+  </div>
+</div>
+
+</div>
+</body>
+</html>
